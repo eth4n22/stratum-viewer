@@ -17,7 +17,7 @@ use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div};
 
 // Entries follow GL semantics: they are in [0.; 1.] with 1. being fully saturated.
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Color<T> {
     pub red: T,
     pub green: T,

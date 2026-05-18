@@ -1,0 +1,360 @@
+ Downloading crates ...
+  Downloaded tempdir v0.3.7
+   Compiling autocfg v1.0.0
+   Compiling libc v0.2.79
+   Compiling proc-macro2 v1.0.24
+   Compiling unicode-xid v0.2.0
+   Compiling syn v1.0.44
+   Compiling getrandom v0.1.14
+    Checking cfg-if v0.1.10
+    Checking lazy_static v1.4.0
+   Compiling const_fn v0.4.2
+   Compiling cc v1.0.50
+   Compiling version_check v0.9.2
+   Compiling serde_derive v1.0.116
+    Checking cfg-if v1.0.0
+   Compiling serde v1.0.116
+   Compiling protobuf v2.18.0
+   Compiling ppv-lite86 v0.2.6
+    Checking scopeguard v1.1.0
+   Compiling byteorder v1.3.4
+   Compiling log v0.4.8
+   Compiling rayon-core v1.9.1
+   Compiling typenum v1.12.0
+   Compiling cmake v0.1.44
+   Compiling num-traits v0.2.12
+   Compiling num-integer v0.1.43
+   Compiling crossbeam-utils v0.8.0
+   Compiling memoffset v0.5.4
+   Compiling num-complex v0.2.4
+   Compiling proc-macro-hack v0.5.15
+   Compiling protobuf_provider v0.1.0 (/mnt/c/Users/65889/Desktop/HDB/Code/rust_viewer/point_cloud_viewer/protobuf_provider)
+   Compiling num-bigint v0.3.0
+   Compiling num-rational v0.2.4
+   Compiling proc-macro-error-attr v1.0.4
+   Compiling quote v1.0.3
+   Compiling rand_core v0.5.1
+   Compiling rand_chacha v0.2.2
+   Compiling rand v0.7.3
+   Compiling bitflags v1.2.1
+    Checking adler32 v1.0.4
+   Compiling remove_dir_all v0.5.2
+   Compiling either v1.5.3
+   Compiling itertools v0.9.0
+    Checking num_cpus v1.13.0
+    Checking approx v0.3.2
+   Compiling tempfile v3.1.0
+   Compiling backtrace-sys v0.1.35
+   Compiling num-bigint v0.2.6
+   Compiling num-iter v0.1.41
+   Compiling num-rational v0.3.0
+   Compiling rayon v1.5.1
+   Compiling crossbeam-utils v0.7.2
+   Compiling proc-macro-error v1.0.4
+   Compiling protobuf-codegen v2.18.0
+   Compiling crc32fast v1.2.0
+    Checking crossbeam-epoch v0.9.0
+    Checking crossbeam-deque v0.8.0
+    Checking crossbeam-channel v0.5.0
+   Compiling maybe-uninit v2.0.0
+    Checking rawpointer v0.2.1
+    Checking matrixmultiply v0.2.3
+   Compiling thiserror-impl v1.0.21
+   Compiling paste-impl v0.1.11
+    Checking rand_distr v0.2.2
+    Checking miniz_oxide v0.3.6
+    Checking rand v0.4.6
+   Compiling hashbrown v0.8.2
+   Compiling indexmap v1.3.2
+   Compiling unicode-segmentation v1.6.0
+   Compiling libm v0.1.4
+    Checking rand_core v0.4.2
+   Compiling cgmath v0.16.1
+    Checking rand_core v0.3.1
+   Compiling heck v0.3.1
+    Checking num-traits v0.1.43
+    Checking deflate v0.8.3
+   Compiling error-chain v0.12.4
+    Checking unicode-width v0.1.7
+    Checking lzw v0.10.0
+    Checking color_quant v1.0.1
+    Checking approx v0.1.1
+    Checking rustc-demangle v0.1.16
+    Checking ahash v0.3.8
+    Checking weezl v0.1.1
+    Checking tiff v0.5.0
+    Checking jpeg-decoder v0.1.18
+    Checking textwrap v0.12.1
+    Checking gif v0.11.1
+    Checking png v0.16.7
+    Checking crossbeam-channel v0.4.4
+    Checking rand v0.5.6
+    Checking crossbeam-queue v0.3.0
+    Checking num-complex v0.3.0
+    Checking time v0.1.42
+    Checking atty v0.2.14
+    Checking vec_map v0.8.1
+    Checking scoped_threadpool v0.1.9
+    Checking bytemuck v1.2.0
+    Checking termcolor v1.1.0
+    Checking strsim v0.10.0
+    Checking os_str_bytes v2.3.0
+    Checking image v0.23.10
+    Checking num v0.3.0
+    Checking pbr v1.0.3
+    Checking crossbeam v0.8.0
+    Checking fnv v1.0.7
+    Checking arrayvec v0.5.1
+    Checking tempdir v0.3.7
+    Checking lru v0.6.0
+    Checking backtrace v0.3.46
+   Compiling clap_derive v3.0.0-beta.2
+    Checking paste v0.1.11
+    Checking generic-array v0.13.2
+   Compiling thiserror v1.0.21
+   Compiling which v4.0.2
+   Compiling protoc v2.18.0
+   Compiling protoc-rust v2.18.0
+    Checking clap v3.0.0-beta.2
+    Checking bigdecimal v0.1.0
+    Checking s2 v0.0.10
+    Checking simba v0.2.1
+    Checking nalgebra v0.22.0
+    Checking nav-types v0.5.1
+   Compiling point_viewer_proto_rust v0.1.0 (/mnt/c/Users/65889/Desktop/HDB/Code/rust_viewer/point_cloud_viewer/point_viewer_proto_rust)
+    Checking point_viewer v0.1.0 (/mnt/c/Users/65889/Desktop/HDB/Code/rust_viewer/point_cloud_viewer)
+warning: you are deriving `PartialEq` and can implement `Eq`
+  --> src/color.rs:20:39
+   |
+20 | #[derive(Debug, Default, Copy, Clone, PartialEq)]
+   |                                       ^^^^^^^^^ help: consider deriving `Eq` as well: `PartialEq, Eq`
+   |
+   = note: `#[warn(clippy::derive_partial_eq_without_eq)]` on by default
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#derive_partial_eq_without_eq
+
+warning: question mark operator is useless here
+  --> src/data_provider/on_disk.rs:45:9
+   |
+45 | /         Ok(
+46 | |             protobuf::parse_from_reader::<proto::Meta>(&mut Cursor::new(data))
+47 | |                 .chain_err(|| format!("Could not parse {}", META_FILENAME))?,
+48 | |         )
+   | |_________^
+   |
+   = note: `#[warn(clippy::needless_question_mark)]` on by default
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_question_mark
+help: try removing question mark and `Ok()`
+   |
+45 ~         protobuf::parse_from_reader::<proto::Meta>(&mut Cursor::new(data))
+46 +                 .chain_err(|| format!("Could not parse {}", META_FILENAME))
+   |
+
+warning: redundant closure
+  --> src/geometry/s2_cell_union.rs:19:14
+   |
+19 |         .map(|p| CellID::from_point(p))
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace the closure with the function itself: `CellID::from_point`
+   |
+   = note: `#[warn(clippy::redundant_closure)]` on by default
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#redundant_closure
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/iterator.rs:102:45
+    |
+102 |                 .map(|pos| culling.contains(&pos))
+    |                                             ^^^^ help: change this to: `pos`
+    |
+    = note: `#[warn(clippy::needless_borrow)]` on by default
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/iterator.rs:303:29
+    |
+303 | ...                   &point_query,
+    |                       ^^^^^^^^^^^^ help: change this to: `point_query`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/generation.rs:395:27
+    |
+395 |             to_node_proto(&id, *num_points, &position_encoding)
+    |                           ^^^ help: change this to: `id`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/generation.rs:398:30
+    |
+398 |     let meta = to_meta_proto(&octree_meta, nodes);
+    |                              ^^^^^^^^^^^^ help: change this to: `octree_meta`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: useless conversion to the same type: `nalgebra::Matrix<f64, nalgebra::U3, nalgebra::U1, nalgebra::ArrayStorage<f64, nalgebra::U3, nalgebra::U1>>`
+   --> src/geometry/obb.rs:109:27
+    |
+109 |         let half_extent = Vector3::new(1.0, 2.0, 3.0).into();
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `Vector3::new(1.0, 2.0, 3.0)`
+    |
+    = note: `#[warn(clippy::useless_conversion)]` on by default
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#useless_conversion
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+  --> src/octree/octree_iterator.rs:32:45
+   |
+32 |             if (self.filter_func)(&current, &self.octree) {
+   |                                             ^^^^^^^^^^^^ help: change this to: `self.octree`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/mod.rs:230:31
+    |
+230 |                 to_node_proto(&id, node_meta.num_points, &node_meta.position_encoding)
+    |                               ^^^ help: change this to: `id`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/mod.rs:326:30
+    |
+326 |         NodeIdsIterator::new(&self, |node_id, octree| {
+    |                              ^^^^^ help: change this to: `self`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/mod.rs:327:37
+    |
+327 |             let aabb = octree.nodes[&node_id].bounding_cube.to_aabb();
+    |                                     ^^^^^^^^ help: change this to: `node_id`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/mod.rs:338:76
+    |
+338 |         dispatch_point_location!(Octree::nodes_in_location_impl, location, &self)
+    |                                                                            ^^^^^ help: change this to: `self`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/octree/mod.rs:353:49
+    |
+353 |             &self.meta.attribute_data_types_for(&attributes)?,
+    |                                                 ^^^^^^^^^^^ help: change this to: `attributes`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this `impl` can be derived
+  --> src/read_write/node_iterator.rs:31:1
+   |
+31 | / impl Default for NodeIterator {
+32 | |     fn default() -> Self {
+33 | |         NodeIterator {
+34 | |             reader: None,
+...  |
+39 | |     }
+40 | | }
+   | |_^
+   |
+   = note: `#[warn(clippy::derivable_impls)]` on by default
+   = help: try annotating `read_write::node_iterator::NodeIterator` with `#[derive(Default)]`
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#derivable_impls
+
+warning: you are deriving `PartialEq` and can implement `Eq`
+  --> src/read_write/node_writer.rs:24:23
+   |
+24 | #[derive(Clone, Copy, PartialEq)]
+   |                       ^^^^^^^^^ help: consider deriving `Eq` as well: `PartialEq, Eq`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#derive_partial_eq_without_eq
+
+warning: found call to `str::trim` before `str::split_whitespace`
+   --> src/read_write/ply.rs:143:39
+    |
+143 |         let entries: Vec<&str> = line.trim().split_whitespace().collect();
+    |                                       ^^^^^^^ help: remove `trim()`
+    |
+    = note: `#[warn(clippy::trim_split_whitespace)]` on by default
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#trim_split_whitespace
+
+warning: accessing first element with `entries.get(0)`
+   --> src/read_write/ply.rs:144:15
+    |
+144 |         match entries.get(0) {
+    |               ^^^^^^^^^^^^^^ help: try: `entries.first()`
+    |
+    = note: `#[warn(clippy::get_first)]` on by default
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#get_first
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/read_write/ply.rs:707:35
+    |
+707 |             self.writer.write_all(&prop.as_bytes())?;
+    |                                   ^^^^^^^^^^^^^^^^ help: change this to: `prop.as_bytes()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/read_write/ply.rs:715:47
+    |
+715 |                         self.writer.write_all(&prop.as_bytes())?;
+    |                                               ^^^^^^^^^^^^^^^^ help: change this to: `prop.as_bytes()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/read_write/ply.rs:722:47
+    |
+722 |                         self.writer.write_all(&prop.as_bytes())?;
+    |                                               ^^^^^^^^^^^^^^^^ help: change this to: `prop.as_bytes()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/read_write/ply.rs:727:43
+    |
+727 |                     self.writer.write_all(&prop.as_bytes())?;
+    |                                           ^^^^^^^^^^^^^^^^ help: change this to: `prop.as_bytes()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/read_write/raw.rs:381:67
+    |
+381 |                     &self.stem.with_extension(attribute_extension(&name)),
+    |                                                                   ^^^^^ help: change this to: `name`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: manual `!RangeInclusive::contains` implementation
+  --> src/read_write/s2.rs:65:16
+   |
+65 |             if radius > EARTH_RADIUS_MAX_M || radius < EARTH_RADIUS_MIN_M {
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: use: `!(EARTH_RADIUS_MIN_M..=EARTH_RADIUS_MAX_M).contains(&radius)`
+   |
+   = note: `#[warn(clippy::manual_range_contains)]` on by default
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#manual_range_contains
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/s2_cells/mod.rs:184:49
+    |
+184 |             &self.meta.attribute_data_types_for(&attributes)?,
+    |                                                 ^^^^^^^^^^^ help: change this to: `attributes`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/s2_cells/mod.rs:227:41
+    |
+227 |             .map(|p| CellID::from_point(&p))
+    |                                         ^^ help: change this to: `p`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow
+
+warning: `point_viewer` (lib) generated 25 warnings
+warning: `point_viewer` (lib test) generated 26 warnings (25 duplicates)
+    Finished dev [unoptimized + debuginfo] target(s) in 2m 35s

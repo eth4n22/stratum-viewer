@@ -18,8 +18,8 @@ use crate::geometry::{Aabb, Cube};
 use crate::octree::{self, to_meta_proto, to_node_proto, ChildIndex, NodeId, OctreeMeta};
 use crate::proto;
 use crate::read_write::{
-    attempt_increasing_rlimit_to_max, Encoding, NodeIterator, NodeWriter, OpenMode, PlyIterator,
-    PositionEncoding, RawNodeWriter,
+    attempt_increasing_rlimit_to_max, Encoding, LazIterator, NodeIterator, NodeWriter, OpenMode,
+    PlyIterator, PositionEncoding, RawNodeWriter,
 };
 use crate::utils::create_progress_bar;
 use crate::META_FILENAME;
@@ -252,12 +252,13 @@ fn subsample_children_into(
     Ok(())
 }
 
-/// Returns the bounding box containing all points
-fn find_bounding_box(filename: impl AsRef<Path>) -> Aabb {
+/// Returns the bounding box containing all points in the stream.
+fn find_bounding_box<I>(stream: I) -> Aabb
+where
+    I: Iterator<Item = PointsBatch> + NumberOfPoints,
+{
     let mut bounding_box = None;
-    let stream = PlyIterator::from_file(filename, NUM_POINTS_PER_BATCH).unwrap();
     let mut progress_bar = create_progress_bar(stream.num_points(), "Determining bounding box");
-
     stream.for_each(|batch| {
         for pos in batch.position {
             let b = bounding_box.get_or_insert(Aabb::new(pos, pos));
@@ -275,15 +276,31 @@ pub fn build_octree_from_file(
     filename: impl AsRef<Path>,
     attributes: &[&str],
 ) {
-    let bounding_box = find_bounding_box(filename.as_ref());
-    let stream = PlyIterator::from_file(filename, NUM_POINTS_PER_BATCH).unwrap();
-    build_octree(
-        output_directory,
-        resolution,
-        bounding_box,
-        stream,
-        attributes,
-    )
+    let ext = filename
+        .as_ref()
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    match ext.as_str() {
+        "las" | "laz" => {
+            let stream = LazIterator::from_file(filename.as_ref(), NUM_POINTS_PER_BATCH)
+                .unwrap_or_else(|e| panic!("Failed to open '{}': {}", filename.as_ref().display(), e));
+            let bounding_box = find_bounding_box(stream);
+            let stream = LazIterator::from_file(filename.as_ref(), NUM_POINTS_PER_BATCH)
+                .unwrap_or_else(|e| panic!("Failed to open '{}': {}", filename.as_ref().display(), e));
+            build_octree(output_directory, resolution, bounding_box, stream, attributes);
+        }
+        _ => {
+            let stream = PlyIterator::from_file(filename.as_ref(), NUM_POINTS_PER_BATCH)
+                .expect("Failed to open PLY file");
+            let bounding_box = find_bounding_box(stream);
+            let stream = PlyIterator::from_file(filename, NUM_POINTS_PER_BATCH)
+                .expect("Failed to open PLY file");
+            build_octree(output_directory, resolution, bounding_box, stream, attributes);
+        }
+    }
 }
 
 pub fn build_octree(
@@ -392,10 +409,10 @@ pub fn build_octree(
         .map(|(id, num_points)| {
             let bounding_cube = id.find_bounding_cube(&Cube::bounding(&octree_meta.bounding_box));
             let position_encoding = PositionEncoding::new(&bounding_cube, octree_meta.resolution);
-            to_node_proto(&id, *num_points, &position_encoding)
+            to_node_proto(id, *num_points, &position_encoding)
         })
         .collect();
-    let meta = to_meta_proto(&octree_meta, nodes);
+    let meta = to_meta_proto(octree_meta, nodes);
 
     let mut buf_writer =
         BufWriter::new(File::create(&output_directory.as_ref().join(META_FILENAME)).unwrap());

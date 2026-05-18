@@ -214,12 +214,20 @@ impl Octree {
         })
     }
 
+    pub fn bounding_box(&self) -> &crate::geometry::Aabb {
+        &self.meta.bounding_box
+    }
+
+    pub fn total_points(&self) -> i64 {
+        self.nodes.values().map(|n| n.num_points).sum()
+    }
+
     pub fn to_meta_proto(&self) -> proto::Meta {
         let nodes: Vec<proto::OctreeNode> = self
             .nodes
             .iter()
             .map(|(id, node_meta)| {
-                to_node_proto(&id, node_meta.num_points, &node_meta.position_encoding)
+                to_node_proto(id, node_meta.num_points, &node_meta.position_encoding)
             })
             .collect();
         to_meta_proto(&self.meta, nodes)
@@ -315,8 +323,8 @@ impl Octree {
         // it's a generalized version of get_visible_nodes(), and get_visible_nodes() can use this
         // function instead.
         let isec = location.aabb_intersector();
-        NodeIdsIterator::new(&self, |node_id, octree| {
-            let aabb = octree.nodes[&node_id].bounding_cube.to_aabb();
+        NodeIdsIterator::new(self, |node_id, octree| {
+            let aabb = octree.nodes[node_id].bounding_cube.to_aabb();
             isec.intersect_aabb(&aabb)
         })
         .collect()
@@ -327,7 +335,7 @@ impl PointCloud for Octree {
     type Id = NodeId;
 
     fn nodes_in_location(&self, location: &PointLocation) -> Vec<Self::Id> {
-        dispatch_point_location!(Octree::nodes_in_location_impl, location, &self)
+        dispatch_point_location!(Octree::nodes_in_location_impl, location, self)
     }
 
     fn encoding_for_node(&self, id: Self::Id) -> Encoding {
@@ -342,7 +350,7 @@ impl PointCloud for Octree {
     ) -> Result<NodeIterator> {
         let node_iterator = NodeIterator::from_data_provider(
             &*self.data_provider,
-            &self.meta.attribute_data_types_for(&attributes)?,
+            &self.meta.attribute_data_types_for(attributes)?,
             self.meta.encoding_for_node(node_id),
             &node_id,
             self.nodes[&node_id].num_points as usize,

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::opengl;
-use nalgebra::{Isometry3, Matrix4, Perspective3, UnitQuaternion, Vector3};
+use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, UnitQuaternion, Vector3};
 
 use serde_derive::{Deserialize, Serialize};
 use std::f64;
@@ -76,6 +76,10 @@ pub struct Camera {
 
     projection_matrix: Matrix4<f32>,
     local_from_global: Isometry3<f64>,
+
+    pub orbit_mode: bool,
+    orbit_center: Vector3<f64>,
+    orbit_distance: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
@@ -83,6 +87,16 @@ pub struct State {
     transform: Isometry3<f64>,
     phi: f64,
     theta: f64,
+}
+
+impl State {
+    pub fn new(transform: Isometry3<f64>, phi: f64, theta: f64) -> Self {
+        Self {
+            transform,
+            phi,
+            theta,
+        }
+    }
 }
 
 const FAR_PLANE: f32 = 10000.;
@@ -126,6 +140,9 @@ impl Camera {
                 near_plane: 2.,
                 far_plane: 5.,
             },
+            orbit_mode: false,
+            orbit_center: Vector3::zeros(),
+            orbit_distance: 10.,
         };
         camera.set_size(gl, width, height);
         camera
@@ -191,6 +208,24 @@ impl Camera {
         self.update_viewport(gl);
     }
 
+    pub fn set_orbit(&mut self, center: Vector3<f64>, distance: f64) {
+        self.orbit_center = center;
+        self.orbit_distance = distance;
+        self.orbit_mode = true;
+        self.moved = true;
+    }
+
+    pub fn toggle_orbit_mode(&mut self) {
+        self.orbit_mode = !self.orbit_mode;
+        if self.orbit_mode {
+            let forward = self.transform.rotation.transform_vector(&(-Vector3::z_axis()));
+            self.orbit_center =
+                self.transform.translation.vector + forward * self.orbit_distance;
+        }
+        self.moved = true;
+        eprintln!("Orbit mode: {}", self.orbit_mode);
+    }
+
     pub fn get_camera_to_world(&self) -> Isometry3<f64> {
         self.local_from_global.inverse() * self.transform
     }
@@ -207,26 +242,13 @@ impl Camera {
         let mut moved = self.moved;
         self.moved = false;
 
-        // Handle keyboard input
         let mut pan: Vector3<f64> = nalgebra::zero();
-        if self.moving_right {
-            pan.x += 1.;
-        }
-        if self.moving_left {
-            pan.x -= 1.;
-        }
-        if self.moving_backward {
-            pan.z += 1.;
-        }
-        if self.moving_forward {
-            pan.z -= 1.;
-        }
-        if self.moving_up {
-            pan.y += 1.;
-        }
-        if self.moving_down {
-            pan.y -= 1.;
-        }
+        if self.moving_right { pan.x += 1.; }
+        if self.moving_left { pan.x -= 1.; }
+        if self.moving_backward { pan.z += 1.; }
+        if self.moving_forward { pan.z -= 1.; }
+        if self.moving_up { pan.y += 1.; }
+        if self.moving_down { pan.y -= 1.; }
         if pan.norm_squared() > 0. {
             self.pan += pan.normalize();
         }
@@ -234,28 +256,10 @@ impl Camera {
         let elapsed_seconds = elapsed.as_seconds_f64();
 
         const TURNING_SPEED: f64 = 0.5;
-        if self.turning_left {
-            self.rotation_speed.theta += TURNING_SPEED;
-        }
-        if self.turning_right {
-            self.rotation_speed.theta -= TURNING_SPEED;
-        }
-        if self.turning_up {
-            self.rotation_speed.phi += TURNING_SPEED;
-        }
-        if self.turning_down {
-            self.rotation_speed.phi -= TURNING_SPEED;
-        }
-
-        // Apply changes
-        if self.pan.norm_squared() > 0. {
-            moved = true;
-            let translation = self
-                .transform
-                .rotation
-                .transform_vector(&(self.pan * self.movement_speed * elapsed_seconds));
-            self.transform.append_translation_mut(&translation.into());
-        }
+        if self.turning_left { self.rotation_speed.theta += TURNING_SPEED; }
+        if self.turning_right { self.rotation_speed.theta -= TURNING_SPEED; }
+        if self.turning_up { self.rotation_speed.phi += TURNING_SPEED; }
+        if self.turning_down { self.rotation_speed.phi -= TURNING_SPEED; }
 
         if self.rotation_speed.theta != 0.0
             || self.rotation_speed.phi != 0.0
@@ -270,9 +274,42 @@ impl Camera {
                 self.theta += self.rotation_speed.theta * elapsed_seconds;
                 self.phi += self.rotation_speed.phi * elapsed_seconds;
             }
-            let rotation_z = UnitQuaternion::from_axis_angle(&Vector3::z_axis(), self.theta);
-            let rotation_x = UnitQuaternion::from_axis_angle(&Vector3::x_axis(), self.phi);
-            self.transform.rotation = rotation_z * rotation_x;
+        }
+
+        // Clamp pitch in orbit mode to prevent camera flip at poles.
+        if self.orbit_mode {
+            self.phi = self.phi.max(-1.4).min(1.4);
+        }
+
+        let rot_z = UnitQuaternion::from_axis_angle(&Vector3::z_axis(), self.theta);
+        let rot_x = UnitQuaternion::from_axis_angle(&Vector3::x_axis(), self.phi);
+        let rot = rot_z * rot_x;
+
+        if self.orbit_mode {
+            if self.pan.norm_squared() > 0. {
+                moved = true;
+                // WASD translates the orbit center in camera-relative directions.
+                let t = rot.transform_vector(
+                    &(self.pan * self.orbit_distance * 0.5 * elapsed_seconds));
+                self.orbit_center += t;
+            }
+            if moved {
+                let eye_offset = rot.transform_vector(&Vector3::new(0., 0., self.orbit_distance));
+                let eye = Point3::from(self.orbit_center + eye_offset);
+                let target = Point3::from(self.orbit_center);
+                let up = rot.transform_vector(&Vector3::y_axis());
+                self.transform = Isometry3::look_at_rh(&eye, &target, &up).inverse();
+            }
+        } else {
+            if self.pan.norm_squared() > 0. {
+                moved = true;
+                let translation = self.transform.rotation.transform_vector(
+                    &(self.pan * self.movement_speed * elapsed_seconds));
+                self.transform.append_translation_mut(&translation.into());
+            }
+            if moved {
+                self.transform.rotation = rot;
+            }
         }
 
         self.pan = nalgebra::zero();
@@ -284,8 +321,21 @@ impl Camera {
     }
 
     pub fn mouse_drag_pan(&mut self, delta_x: i32, delta_y: i32) {
-        self.pan.x -= 100. * f64::from(delta_x) / f64::from(self.width);
-        self.pan.y += 100. * f64::from(delta_y) / f64::from(self.height);
+        if self.orbit_mode {
+            // Move orbit center laterally in screen space, scaled to current zoom distance.
+            let rot_z = UnitQuaternion::from_axis_angle(&Vector3::z_axis(), self.theta);
+            let rot_x = UnitQuaternion::from_axis_angle(&Vector3::x_axis(), self.phi);
+            let rot = rot_z * rot_x;
+            let scale = self.orbit_distance * 2.0 / f64::from(self.width);
+            let right = rot.transform_vector(&Vector3::x_axis());
+            let up = rot.transform_vector(&Vector3::y_axis());
+            self.orbit_center -= right * (scale * f64::from(delta_x));
+            self.orbit_center += up * (scale * f64::from(delta_y));
+            self.moved = true;
+        } else {
+            self.pan.x -= 100. * f64::from(delta_x) / f64::from(self.width);
+            self.pan.y += 100. * f64::from(delta_y) / f64::from(self.height);
+        }
     }
 
     pub fn mouse_drag_rotate(&mut self, delta_x: i32, delta_y: i32) {
@@ -296,9 +346,16 @@ impl Camera {
     }
 
     pub fn mouse_wheel(&mut self, delta: i32) {
-        let sign = f64::from(delta.signum());
-        self.movement_speed += sign * 0.1 * self.movement_speed;
-        self.movement_speed = self.movement_speed.max(0.01);
+        if self.orbit_mode {
+            // Scroll to zoom: shrink or grow orbit distance.
+            let factor = if delta > 0 { 0.85 } else { 1.0 / 0.85 };
+            self.orbit_distance = (self.orbit_distance * factor).max(0.01);
+            self.moved = true;
+        } else {
+            let sign = f64::from(delta.signum());
+            self.movement_speed += sign * 0.1 * self.movement_speed;
+            self.movement_speed = self.movement_speed.max(0.01);
+        }
     }
 
     pub fn pan(&mut self, x: f64, y: f64, z: f64) {

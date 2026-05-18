@@ -140,8 +140,8 @@ fn parse_header<R: BufRead>(reader: &mut R) -> Result<(Header, usize)> {
     loop {
         line.clear();
         header_len += reader.read_line(&mut line)?;
-        let entries: Vec<&str> = line.trim().split_whitespace().collect();
-        match entries.get(0) {
+        let entries: Vec<&str> = line.split_whitespace().collect();
+        match entries.first() {
             Some(&"format") if entries.len() == 3 => {
                 if entries[2] != "1.0" {
                     return Err(InvalidInput(format!("Invalid version: {}", entries[2])).into());
@@ -202,6 +202,7 @@ fn parse_header<R: BufRead>(reader: &mut R) -> Result<(Header, usize)> {
                     offset = Vector3::new(x, y, z)
                 }
             }
+            Some(&"obj_info") => {}
             _ => return Err(InvalidInput(format!("Invalid line: {}", line)).into()),
         }
     }
@@ -703,7 +704,7 @@ impl PlyNodeWriter {
         };
         for pos in &["x", "y", "z"] {
             let prop = &["property", " ", pos_data_str, " ", pos, "\n"].concat();
-            self.writer.write_all(&prop.as_bytes())?;
+            self.writer.write_all(prop.as_bytes())?;
         }
         for (name, data_str, num_properties) in elements {
             match &name[..] {
@@ -711,19 +712,19 @@ impl PlyNodeWriter {
                     let colors = ["red", "green", "blue", "alpha"];
                     for color in colors.iter().take(*num_properties) {
                         let prop = &["property", " ", data_str, " ", color, "\n"].concat();
-                        self.writer.write_all(&prop.as_bytes())?;
+                        self.writer.write_all(prop.as_bytes())?;
                     }
                 }
                 _ if *num_properties > 1 => {
                     for i in 0..*num_properties {
                         let prop =
                             &["property", " ", data_str, " ", name, &i.to_string(), "\n"].concat();
-                        self.writer.write_all(&prop.as_bytes())?;
+                        self.writer.write_all(prop.as_bytes())?;
                     }
                 }
                 _ => {
                     let prop = &["property", " ", data_str, " ", name, "\n"].concat();
-                    self.writer.write_all(&prop.as_bytes())?;
+                    self.writer.write_all(prop.as_bytes())?;
                 }
             }
         }

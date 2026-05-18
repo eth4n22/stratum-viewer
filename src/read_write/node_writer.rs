@@ -21,7 +21,7 @@ use std::fs::{remove_file, File, OpenOptions};
 use std::io::{BufWriter, Result, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum OpenMode {
     Truncate,
     Append,

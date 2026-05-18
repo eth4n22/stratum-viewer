@@ -47,6 +47,7 @@ serde = "1.0.116"
 serde_derive = "1.0.116"
 simba = "0.2.1"
 rand = "0.7.3"
+las = { version = "0.8", features = ["laz"] }
 
 [dependencies.point_viewer_proto_rust]
 path = "point_viewer_proto_rust"

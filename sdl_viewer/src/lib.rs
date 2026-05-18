@@ -23,6 +23,7 @@ macro_rules! c_str {
 }
 
 mod camera;
+pub mod hud;
 #[allow(
     non_upper_case_globals,
     clippy::missing_safety_doc,
@@ -74,9 +75,13 @@ struct PointCloudRenderer {
     max_nodes_in_memory: usize,
     world_to_gl: Matrix4<f64>,
     max_nodes_moving: usize,
+    max_nodes_static: usize,
     show_octree_nodes: bool,
     node_views: NodeViewContainer,
     box_drawer: BoxDrawer,
+    total_points: i64,
+    pub last_fps: f64,
+    pub last_cache_mb: f32,
 }
 
 #[derive(Debug)]
@@ -110,6 +115,7 @@ impl PointCloudRenderer {
             }
         });
 
+        let total_points = octree.total_points();
         Self {
             last_moving: now,
             last_log: now,
@@ -120,13 +126,17 @@ impl PointCloudRenderer {
             gamma: 1.,
             get_visible_nodes_params_tx,
             get_visible_nodes_result_rx,
-            max_nodes_moving: max_nodes_in_memory,
+            max_nodes_moving: 200,
+            max_nodes_static: 200,
             needs_drawing: true,
             show_octree_nodes: false,
             max_nodes_in_memory,
             node_views: NodeViewContainer::new(octree, max_nodes_in_memory),
             box_drawer: BoxDrawer::new(&Rc::clone(&gl)),
             world_to_gl: Matrix4::identity(),
+            total_points,
+            last_fps: 0.0,
+            last_cache_mb: 0.0,
             gl,
         }
     }
@@ -138,6 +148,8 @@ impl PointCloudRenderer {
         self.get_visible_nodes_params_tx.send(*world_to_gl).unwrap();
         self.last_moving = time::Instant::now();
         self.world_to_gl = *world_to_gl;
+        // Snap back to fast cap so movement is immediately smooth.
+        self.max_nodes_static = self.max_nodes_moving;
     }
 
     pub fn toggle_show_octree_nodes(&mut self) {
@@ -155,10 +167,11 @@ impl PointCloudRenderer {
         self.needs_drawing = true;
     }
 
-    pub fn draw(&mut self) -> DrawResult {
+    pub fn draw(&mut self) -> (DrawResult, Option<String>) {
         let mut draw_result = DrawResult::NoChange;
         let mut num_points_drawn = 0;
         let mut num_nodes_drawn = 0;
+        let mut stats_string: Option<String> = None;
 
         let now = time::Instant::now();
         let moving = now - self.last_moving < time::Duration::milliseconds(150);
@@ -177,12 +190,7 @@ impl PointCloudRenderer {
             }
         }
 
-        // We use a heuristic to keep the frame rate as stable as possible by increasing/decreasing the number of nodes to draw.
-        let max_nodes_to_display = if moving {
-            self.max_nodes_moving
-        } else {
-            self.max_nodes_in_memory
-        };
+        let max_nodes_to_display = if moving { self.max_nodes_moving } else { self.max_nodes_static };
         let filtered_visible_nodes = self.visible_nodes.iter().take(max_nodes_to_display);
 
         for node_id in filtered_visible_nodes {
@@ -209,35 +217,46 @@ impl PointCloudRenderer {
         }
         if self.needs_drawing {
             draw_result = DrawResult::HasDrawn;
+            self.num_frames += 1;
         }
         self.needs_drawing = moving;
 
-        self.num_frames += 1;
         let now = time::Instant::now();
         if now - self.last_log > time::Duration::seconds(1) {
             let duration_s = (now - self.last_log).as_seconds_f64();
             let fps = f64::from(self.num_frames) / duration_s;
             if moving {
+                // Adapt movement cap to maintain 20-30 FPS during navigation.
                 if fps < 20. {
-                    self.max_nodes_moving = (self.max_nodes_moving as f32 * 0.9) as usize;
+                    self.max_nodes_moving = ((self.max_nodes_moving as f32 * 0.8) as usize).max(10);
+                } else if fps > 30. && self.max_nodes_moving < self.max_nodes_in_memory {
+                    self.max_nodes_moving = ((self.max_nodes_moving as f32 * 1.3) as usize)
+                        .min(self.max_nodes_in_memory);
                 }
-                if fps > 25. && self.max_nodes_moving < self.max_nodes_in_memory {
-                    self.max_nodes_moving = (self.max_nodes_moving as f32 * 1.1) as usize;
-                }
+            } else {
+                // Progressively load more nodes while stationary (+50% per second).
+                self.max_nodes_static = ((self.max_nodes_static as f32 * 1.5) as usize)
+                    .min(self.max_nodes_in_memory);
+                self.needs_drawing = true;
             }
             self.num_frames = 0;
             self.last_log = now;
-            eprintln!(
-                "FPS: {:.2}, Drew {} points from {} loaded nodes. {} nodes \
-                 should be shown, Cache {} MB",
+            self.last_fps = fps;
+            self.last_cache_mb = self.node_views.get_used_memory_bytes() as f32 / 1024. / 1024.;
+            let stats = format!(
+                "FPS: {:.0}  |  Drawn: {} pts / {} nodes  |  Visible: {}  |  Cache: {:.0} MB  |  Cloud: {} pts",
                 fps,
                 num_points_drawn,
                 num_nodes_drawn,
                 self.visible_nodes.len(),
                 self.node_views.get_used_memory_bytes() as f32 / 1024. / 1024.,
+                self.total_points,
             );
+            eprintln!("{}", stats);
+            stats_string = Some(stats);
+            self.needs_drawing = true; // keep HUD visible when camera is idle
         }
-        draw_result
+        (draw_result, stats_string)
     }
 }
 
@@ -347,6 +366,12 @@ impl Joystick for SpaceMouseJoystick {
     }
 }
 
+fn fmt_count(n: i64) -> String {
+    if n >= 1_000_000 { format!("{:.1}M", n as f64 / 1_000_000.0) }
+    else if n >= 1_000 { format!("{:.1}K", n as f64 / 1_000.0) }
+    else { n.to_string() }
+}
+
 pub fn run<T: Extension>(data_provider_factory: DataProviderFactory) {
     let mut app = clap::App::new("sdl_viewer").args(&[
         clap::Arg::new("octree")
@@ -444,8 +469,8 @@ pub fn run<T: Extension>(data_provider_factory: DataProviderFactory) {
 
     const WINDOW_WIDTH: i32 = 800;
     const WINDOW_HEIGHT: i32 = 600;
-    let window = match video_subsystem
-        .window("sdl2_viewer", WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32)
+    let mut window = match video_subsystem
+        .window("Stratum", WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32)
         .position_centered()
         .resizable()
         .opengl()
@@ -467,13 +492,23 @@ pub fn run<T: Extension>(data_provider_factory: DataProviderFactory) {
         ptr as *const std::ffi::c_void
     }));
 
+    let hud = hud::HudRenderer::new(&gl);
     let mut extension = T::new(&matches, Rc::clone(&gl));
     let ext_local_from_global = T::local_from_global(&matches, &octree);
+    let initial_bbox = octree.bounding_box().clone();
     let mut renderer = PointCloudRenderer::new(max_nodes_in_memory, Rc::clone(&gl), octree);
     let terrain_paths = matches.values_of("terrain").unwrap_or_default();
     let mut terrain_renderer = TerrainRenderer::new(Rc::clone(&gl), terrain_paths);
     let local_from_global = ext_local_from_global.or_else(|| terrain_renderer.local_from_global());
     let mut camera = Camera::new(&gl, WINDOW_WIDTH, WINDOW_HEIGHT, local_from_global);
+
+    // Start in orbit mode centred on the scene bounding box.
+    {
+        use nalgebra::Vector3;
+        let center = initial_bbox.center();
+        let diagonal = (initial_bbox.max() - initial_bbox.min()).norm();
+        camera.set_orbit(Vector3::new(center.x, center.y, center.z), diagonal);
+    }
 
     let mut events = ctx.event_pump().unwrap();
     let mut last_frame_time = time::Instant::now();
@@ -504,6 +539,7 @@ pub fn run<T: Extension>(data_provider_factory: DataProviderFactory) {
                             Scancode::Right => camera.turning_right = true,
                             Scancode::Down => camera.turning_down = true,
                             Scancode::Up => camera.turning_up = true,
+                            Scancode::R => camera.toggle_orbit_mode(),
                             Scancode::O => renderer.toggle_show_octree_nodes(),
                             Scancode::Num7 => renderer.adjust_gamma(-0.1),
                             Scancode::Num8 => renderer.adjust_gamma(0.1),
@@ -599,10 +635,20 @@ pub fn run<T: Extension>(data_provider_factory: DataProviderFactory) {
             extension.camera_changed(&camera.get_world_to_gl());
         }
 
-        match renderer.draw() {
+        let (draw_result, stats_opt) = renderer.draw();
+        if let Some(ref stats) = stats_opt {
+            let _ = window.set_title(&format!("Stratum — {}", stats));
+        }
+        match draw_result {
             DrawResult::HasDrawn => {
                 terrain_renderer.draw();
                 extension.draw();
+                let hud_lines = vec![
+                    format!("FPS: {:.0}", renderer.last_fps),
+                    format!("PTS: {}", fmt_count(renderer.total_points)),
+                    format!("MEM: {:.0} MB", renderer.last_cache_mb),
+                ];
+                hud.draw(camera.width, camera.height, &hud_lines);
                 window.gl_swap_window()
             }
             DrawResult::NoChange => (),

@@ -106,7 +106,7 @@ mod tests {
             0.123,
         );
         let translation = Vector3::new(0.0, 0.0, 0.0).into();
-        let half_extent = Vector3::new(1.0, 2.0, 3.0).into();
+        let half_extent = Vector3::new(1.0, 2.0, 3.0);
         // Object to intersection-test against
         let bbox = Aabb::new(Point3::new(0.5, 1.0, -3.0), Point3::new(1.5, 3.0, 3.0));
 

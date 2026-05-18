@@ -21,6 +21,7 @@ use std::collections::HashMap;
 use std::io::BufReader;
 
 /// Streams points from our data provider representation.
+#[derive(Default)]
 pub struct NodeIterator {
     reader: Option<RawNodeReader>,
     num_points: usize,
@@ -28,16 +29,6 @@ pub struct NodeIterator {
     batch_size: usize,
 }
 
-impl Default for NodeIterator {
-    fn default() -> Self {
-        NodeIterator {
-            reader: None,
-            num_points: 0,
-            point_count: 0,
-            batch_size: 0,
-        }
-    }
-}
 
 impl NodeIterator {
     pub fn new(reader: RawNodeReader, num_points: usize, batch_size: usize) -> Self {
@@ -71,13 +62,13 @@ impl NodeIterator {
         // Unwrapping all following removals is safe,
         // as the data provider would already have errored on unavailability.
         let position_reader = all_reads.remove("position").unwrap();
-        let attribute_readers = attribute_data_types
+        let attribute_readers: HashMap<String, AttributeReader> = attribute_data_types
             .iter()
-            .map(|(attribute, data_type)| {
+            .filter_map(|(attribute, data_type)| {
+                let reader = all_reads.remove(attribute)?;
                 let data_type = *data_type;
-                let reader = BufReader::new(all_reads.remove(attribute).unwrap());
-                let attribute_reader = AttributeReader { data_type, reader };
-                (attribute.clone(), attribute_reader)
+                let reader = BufReader::new(reader);
+                Some((attribute.clone(), AttributeReader { data_type, reader }))
             })
             .collect();
 

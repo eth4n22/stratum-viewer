@@ -42,10 +42,8 @@ impl DataProvider for OnDiskDataProvider {
 
         let mut data = Vec::new();
         File::open(&self.directory.join(META_FILENAME))?.read_to_end(&mut data)?;
-        Ok(
-            protobuf::parse_from_reader::<proto::Meta>(&mut Cursor::new(data))
-                .chain_err(|| format!("Could not parse {}", META_FILENAME))?,
-        )
+        protobuf::parse_from_reader::<proto::Meta>(&mut Cursor::new(data))
+            .chain_err(|| format!("Could not parse {}", META_FILENAME))
     }
 
     fn data(
@@ -57,11 +55,15 @@ impl DataProvider for OnDiskDataProvider {
         let mut readers = HashMap::<String, Box<dyn Read + Send>>::new();
         for node_attribute in node_attributes {
             let file = match File::open(&stem.with_extension(attribute_extension(node_attribute))) {
+                Ok(f) => f,
                 Err(ref err) if err.kind() == ::std::io::ErrorKind::NotFound => {
-                    return Err(ErrorKind::NodeNotFound.into());
+                    if *node_attribute == "position" {
+                        return Err(ErrorKind::NodeNotFound.into());
+                    }
+                    continue;
                 }
-                e => e,
-            }?;
+                Err(e) => return Err(e.into()),
+            };
             readers.insert((*node_attribute).to_string(), Box::new(file));
         }
         Ok(readers)

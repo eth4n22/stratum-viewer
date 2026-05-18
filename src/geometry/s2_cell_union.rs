@@ -16,7 +16,7 @@ pub fn cells_intersecting_polyhedron(cells: &[Cell], polyhedron: &impl ConvexPol
     let polyhedron_corner_cells = polyhedron
         .compute_corners()
         .iter()
-        .map(|p| CellID::from_point(p))
+        .map(CellID::from_point)
         .collect();
     let mut polyhedron_cell_union = CellUnion(polyhedron_corner_cells);
     polyhedron_cell_union.normalize();
