@@ -5,9 +5,29 @@ Forked from [cartographer-project/point_cloud_viewer](https://github.com/cartogr
 
 ## What's Different from Upstream
 
+**File format support**
 - Native LAS/LAZ file support (no pre-conversion needed)
 - RGB colour rendering from LAS point formats 2, 3, 5, 7, 8, 10
-- Intensity fallback for LAS formats without colour (0, 1, 4, 6, 9)
+- Intensity fallback to greyscale for LAS formats without colour (0, 1, 4, 6, 9)
+- Automatic 8-bit vs 16-bit RGB detection per file
+
+**Navigation**
+- Orbit mode (default on open) — viewer starts centred on the scene bounding box
+- `R` toggles between orbit mode and free-fly mode
+- In orbit mode: WASD moves the orbit centre, scroll zooms, right-mouse-drag pans
+- Pitch clamped in orbit mode to prevent camera flip at poles
+
+**Performance**
+- Dynamic FPS-based node cap — drops loaded nodes when FPS falls below 20, recovers when above 30
+- Progressively loads more detail while the camera is stationary (+50% per second up to memory limit)
+- Snaps back to a lower node budget immediately on camera movement for consistent frame rate
+
+**HUD overlay**
+- On-screen display showing FPS, total point count, and GPU cache usage
+- Drawn with an embedded bitmap font — no external font dependency
+- Window title bar also shows per-frame render stats
+
+**Branding**
 - Viewer window renamed to Stratum
 
 ---
@@ -108,19 +128,22 @@ The viewer works by first indexing your file into an octree, then streaming it f
 
 ### Viewer Controls
 
-| Key | Action |
-| --- | ------ |
-| W / A / S / D | Move forward / left / back / right |
-| Q / Z | Move up / down |
-| Arrow keys | Turn |
-| Left mouse drag | Rotate |
-| Right mouse drag | Pan |
-| Scroll wheel | Adjust movement speed |
-| 0 / 9 | Increase / decrease point size |
-| 8 / 7 | Brighten / darken scene |
-| O | Show octree nodes |
-| Ctrl + 0–9 | Load saved camera position |
-| Shift + Ctrl + 0–9 | Save current camera position |
+The viewer opens in **orbit mode** centred on the scene. Press `R` to switch to free-fly.
+
+| Key / Input | Orbit mode | Free-fly mode |
+| --- | --- | --- |
+| W / A / S / D | Move orbit centre | Fly forward / left / back / right |
+| Q / Z | — | Fly up / down |
+| Arrow keys | Turn | Turn |
+| Scroll wheel | Zoom in / out | Adjust movement speed |
+| Left mouse drag | Rotate around orbit centre | Rotate view |
+| Right mouse drag | Pan orbit centre | Pan |
+| R | Toggle orbit ↔ free-fly | Toggle orbit ↔ free-fly |
+| 0 / 9 | Increase / decrease point size | |
+| 8 / 7 | Brighten / darken scene | |
+| O | Show octree nodes | |
+| Ctrl + 0–9 | Load saved camera position | |
+| Shift + Ctrl + 0–9 | Save current camera position | |
 
 ---
 
